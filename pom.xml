@@ -6,7 +6,7 @@
 
     <groupId>de.MCmoderSD</groupId>
     <artifactId>Debrid-Link-API</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 
     <name>Debrid-Link-API</name>
     <description>The Debrid-Link API makes it possible to download fast from various file hosters</description>
