@@ -1,5 +1,6 @@
 package de.MCmoderSD.debrid.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.MCmoderSD.debrid.objects.Download;
 
@@ -63,6 +64,12 @@ public class API {
         }
 
         // Parse response
-        return new Download(mapper.readTree(inputStream));
+        JsonNode response = mapper.readTree(inputStream);
+        if (response.get("success").asBoolean()) return new Download(response.get("value"));
+        else {
+            String error = response.get("error").asText();
+            System.err.println("API Error: " + error);
+            throw new IOException("API request failed: " + error);
+        }
     }
 }
