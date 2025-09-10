@@ -5,11 +5,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.MCmoderSD.debrid.objects.Download;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 
-@SuppressWarnings("unused")
-public class API {
+/**
+ * Provides a wrapper for the Debrid-Link API v2.
+ * <p>
+ * This class allows interaction with the Debrid-Link service using a provided API key.
+ * Currently, it supports adding new downloads to the Debrid-Link downloader.
+ * </p>
+ */
+@SuppressWarnings("ALL")
+public class DebridAPI {
 
     // Constants
     private static final String ENDPOINT = "https://debrid-link.com/api/v2";
@@ -19,19 +28,33 @@ public class API {
     private final String apiKey;
     private final ObjectMapper mapper;
 
-    // Constructor
-    public API(String apiKey) {
+    /**
+     * Creates a new instance of the {@link DebridAPI}.
+     *
+     * @param apiKey The API key for authenticating with Debrid-Link.
+     * @throws IllegalArgumentException if the provided API key is {@code null} or blank.
+     */
+    public DebridAPI(String apiKey) {
 
         // Check API Key
         if (apiKey == null || apiKey.isBlank()) throw new IllegalArgumentException("API Key is null or empty");
 
-        // Check API Key length
+        // Set API Key
         this.apiKey = apiKey;
 
         // Initialize ObjectMapper
         mapper = new ObjectMapper();
     }
 
+    /**
+     * Sends a request to Debrid-Link to add a new download.
+     *
+     * @param url The URL of the file to download.
+     * @return A {@link Download} object containing information about the added download.
+     * @throws IllegalArgumentException if the provided URL is {@code null} or blank.
+     * @throws IOException              if the API request fails or the response cannot be parsed.
+     * @throws URISyntaxException       if the endpoint URI is malformed.
+     */
     public Download addDownload(String url) throws IOException, URISyntaxException {
 
         // Check URL

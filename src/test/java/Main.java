@@ -1,4 +1,4 @@
-import de.MCmoderSD.debrid.core.API;
+import de.MCmoderSD.debrid.core.DebridAPI;
 import de.MCmoderSD.debrid.objects.Download;
 
 import java.io.File;
@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 
+@SuppressWarnings("ALL")
 public class Main {
 
     public static void main(String[] args) {
@@ -16,7 +17,7 @@ public class Main {
         String downloadUrl = "download-url-here";   // Replace with the actual download URL
 
         // Initialize API
-        API api = new API(apiKey);
+        DebridAPI api = new DebridAPI(apiKey);
 
         try {
 
