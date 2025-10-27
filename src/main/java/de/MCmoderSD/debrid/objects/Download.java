@@ -1,6 +1,6 @@
 package de.MCmoderSD.debrid.objects;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +18,7 @@ import java.util.UUID;
  * opening an input stream to the actual download URL.
  * </p>
  */
-@SuppressWarnings("ALL")
+@SuppressWarnings("unused")
 public class Download {
 
     // Json Attributes
@@ -48,12 +48,12 @@ public class Download {
      */
     public Download(JsonNode node) {
         created = node.has("created") ? new Timestamp(node.get("created").asLong()) : new Timestamp(System.currentTimeMillis());
-        id = node.has("id") ? node.get("id").asText() : UUID.randomUUID().toString();
-        name = node.get("name").asText();
-        source = node.get("url").asText();
-        downloadLink = node.get("downloadUrl").asText();
+        id = node.has("id") ? node.get("id").asString() : UUID.randomUUID().toString();
+        name = node.get("name").asString();
+        source = node.get("url").asString();
+        downloadLink = node.get("downloadUrl").asString();
         expired = node.has("expired") ? node.get("expired").asBoolean() : null;
-        host = node.has("host") ? node.get("host").asText() : null;
+        host = node.has("host") ? node.get("host").asString() : null;
         size = node.has("size") ? node.get("size").asLong() : null;
     }
 

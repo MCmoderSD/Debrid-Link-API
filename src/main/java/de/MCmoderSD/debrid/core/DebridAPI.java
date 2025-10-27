@@ -1,8 +1,8 @@
 package de.MCmoderSD.debrid.core;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.MCmoderSD.debrid.objects.Download;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.URI;
@@ -17,7 +17,6 @@ import java.nio.charset.StandardCharsets;
  * Currently, it supports adding new downloads to the Debrid-Link downloader.
  * </p>
  */
-@SuppressWarnings("ALL")
 public class DebridAPI {
 
     // Constants
@@ -90,7 +89,7 @@ public class DebridAPI {
         JsonNode response = mapper.readTree(inputStream);
         if (response.get("success").asBoolean()) return new Download(response.get("value"));
         else {
-            String error = response.get("error").asText();
+            String error = response.get("error").asString();
             System.err.println("API Error: " + error);
             throw new IOException("API request failed: " + error);
         }
