@@ -6,17 +6,13 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
-/**
- * Provides a wrapper for the Debrid-Link API v2.
- * <p>
- * This class allows interaction with the Debrid-Link service using a provided API key.
- * Currently, it supports adding new downloads to the Debrid-Link downloader.
- * </p>
- */
+import static java.net.URLEncoder.encode;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class DebridAPI {
 
     // Constants
@@ -26,13 +22,9 @@ public class DebridAPI {
     // Attributes
     private final String apiKey;
     private final ObjectMapper mapper;
+    private final HttpClient httpClient;
 
-    /**
-     * Creates a new instance of the {@link DebridAPI}.
-     *
-     * @param apiKey The API key for authenticating with Debrid-Link.
-     * @throws IllegalArgumentException if the provided API key is {@code null} or blank.
-     */
+    // Constructor
     public DebridAPI(String apiKey) {
 
         // Check API Key
@@ -41,57 +33,59 @@ public class DebridAPI {
         // Set API Key
         this.apiKey = apiKey;
 
-        // Initialize ObjectMapper
+        // Initialize Attributes
         mapper = new ObjectMapper();
+        httpClient = HttpClient.newBuilder().build();
     }
 
-    /**
-     * Sends a request to Debrid-Link to add a new download.
-     *
-     * @param url The URL of the file to download.
-     * @return A {@link Download} object containing information about the added download.
-     * @throws IllegalArgumentException if the provided URL is {@code null} or blank.
-     * @throws IOException              if the API request fails or the response cannot be parsed.
-     * @throws URISyntaxException       if the endpoint URI is malformed.
-     */
-    public Download addDownload(String url) throws IOException, URISyntaxException {
+    // Helper Method to Send HTTP Requests
+    private JsonNode sendRequest(HttpRequest request) {
+        try {
+
+            // Check Request
+            if (request == null) throw new IllegalArgumentException("HTTP Request must not be null");
+
+            // Send HTTP Request
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            // Check Response Status
+            var status = response.statusCode();
+            if (status != 200) throw new IOException("HTTP Status code " + status);
+
+            // Return Response Body
+            return mapper.readTree(response.body());
+
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("Failed to send HTTP request", e);
+        }
+    }
+
+    // API Method to Add Download
+    public Download addDownload(String url) {
 
         // Check URL
-        if (url == null || url.isBlank()) throw new IllegalArgumentException("URL is null or empty");
+        if (url == null || url.isBlank()) throw new IllegalArgumentException("URL must not be null or empty");
 
-        // Open connection
-        var endpoint = new URI(ENDPOINT + ADD_DOWNLOAD);
-        var httpURLConnection = (HttpURLConnection) endpoint.toURL().openConnection();
+        // Build HTTP Request
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(ENDPOINT + ADD_DOWNLOAD))
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString("url=" + encode(url, UTF_8)))
+                .build();
 
-        // Set request properties
-        httpURLConnection.setRequestMethod("POST");
-        httpURLConnection.setRequestProperty("Authorization", "Bearer " + apiKey);
-        httpURLConnection.setRequestProperty("Content-Type", "application/json");
-        httpURLConnection.setDoOutput(true);
+        // Send HTTP Request and Get Response
+        var response = sendRequest(request);
 
-        // Set request body
-        String jsonBody = "{\"url\": \"" + url + "\"}";
-        var outputStream = httpURLConnection.getOutputStream();
-        byte[] input = jsonBody.getBytes(StandardCharsets.UTF_8);
-        outputStream.write(input, 0, input.length);
+        // Check Success
+        if (!response.has("success") || !response.get("success").asBoolean()) throw new RuntimeException("API response indicates failure: " + response);
+        if (!response.has("value") || response.get("value").isNull() || response.get("value").isEmpty() || !response.get("value").isObject()) throw new RuntimeException("API response is missing expected 'value' object: " + response);
 
-        var responseCode = httpURLConnection.getResponseCode();
-        var inputStream = (responseCode >= 200 && responseCode < 300) ? httpURLConnection.getInputStream() : httpURLConnection.getErrorStream();
+        // Inspect Value
+        var value = response.get("value");
+        if (!value.has("expired") || !value.get("expired").isBoolean() || value.get("expired").asBoolean())  throw new RuntimeException("API response indicates failure: " + response);
 
-        // Check response code
-        if (responseCode < 200 || responseCode >= 300) {
-            String error = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            System.err.println("API Error (" + responseCode + "): " + error);
-            throw new IOException("API request failed with code " + responseCode);
-        }
-
-        // Parse response
-        JsonNode response = mapper.readTree(inputStream);
-        if (response.get("success").asBoolean()) return new Download(response.get("value"));
-        else {
-            String error = response.get("error").asString();
-            System.err.println("API Error: " + error);
-            throw new IOException("API request failed: " + error);
-        }
+        // Return Download Object
+        return new Download(value);
     }
 }

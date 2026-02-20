@@ -2,22 +2,12 @@ package de.MCmoderSD.debrid.objects;
 
 import tools.jackson.databind.JsonNode;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;
-import java.util.UUID;
+import java.util.Optional;
 
-/**
- * Represents a single download object returned by the Debrid-Link API.
- * <p>
- * This class maps JSON attributes from the API response into strongly typed
- * Java fields, such as creation time, file name, download link, size, and host.
- * It also provides convenience methods for accessing these attributes and
- * opening an input stream to the actual download URL.
- * </p>
- */
 @SuppressWarnings("unused")
 public class Download {
 
@@ -27,116 +17,75 @@ public class Download {
     private final String name;
     private final String source;
     private final String downloadLink;
-    private final Boolean expired;
     private final String host;
     private final Long size;
 
-    /**
-     * Constructs a {@link Download} object from a given JSON node.
-     *
-     * @param node The {@link JsonNode} containing download information.
-     *             <ul>
-     *                 <li><b>created</b> → Creation timestamp (milliseconds since epoch)</li>
-     *                 <li><b>id</b> → Unique download ID</li>
-     *                 <li><b>name</b> → File name</li>
-     *                 <li><b>url</b> → Source URL</li>
-     *                 <li><b>downloadUrl</b> → Direct download link</li>
-     *                 <li><b>expired</b> → Expiration flag</li>
-     *                 <li><b>host</b> → Host name</li>
-     *                 <li><b>size</b> → File size in bytes</li>
-     *             </ul>
-     */
+    // Constructor
     public Download(JsonNode node) {
         created = node.has("created") ? new Timestamp(node.get("created").asLong()) : new Timestamp(System.currentTimeMillis());
-        id = node.has("id") ? node.get("id").asString() : UUID.randomUUID().toString();
+        id = node.get("id").asString();
         name = node.get("name").asString();
         source = node.get("url").asString();
         downloadLink = node.get("downloadUrl").asString();
-        expired = node.has("expired") ? node.get("expired").asBoolean() : null;
         host = node.has("host") ? node.get("host").asString() : null;
         size = node.has("size") ? node.get("size").asLong() : null;
     }
 
-    /**
-     * Opens an {@link InputStream} to the direct download link.
-     *
-     * @return An input stream for reading the file.
-     * @throws URISyntaxException If the download URL is malformed.
-     * @throws IOException        If the stream cannot be opened.
-     */
+    // Convenience Method to Open Download Stream
     public InputStream openStream() throws URISyntaxException, IOException {
         return new URI(downloadLink).toURL().openStream();
     }
 
-    /**
-     * Gets the creation timestamp of the download.
-     *
-     * @return The creation time as a {@link Timestamp}.
-     */
+    // Convenience Method to Download File to Disk with Default Name
+    public File toFile() {
+        return toFile(new File(name));
+    }
+
+    // Convenience Method to Download File to Disk
+    public File toFile(File file) {
+
+        // Check if file is valid
+        if (file == null) throw new IllegalArgumentException("File must not be null");
+        if (file.isDirectory()) throw new IllegalArgumentException("File must not be a directory");
+
+        // Download file
+        try (
+                var in = new BufferedInputStream(openStream());                 // Open input stream to download URL
+                var out = new BufferedOutputStream(new FileOutputStream(file))  // Open output stream to target file
+        ) {
+            in.transferTo(out);                                                 // Transfer data from input stream to output stream
+            return file;                                                        // Return the file reference after successful download
+        } catch (URISyntaxException | IOException e) {
+            throw new RuntimeException("Failed to download file", e);
+        }
+    }
+
+    // Getters
     public Timestamp getCreated() {
         return created;
     }
 
-    /**
-     * Gets the unique identifier of the download.
-     *
-     * @return The download ID.
-     */
     public String getId() {
         return id;
     }
 
-    /**
-     * Gets the name of the file.
-     *
-     * @return The file name.
-     */
     public String getName() {
         return name;
     }
 
-    /**
-     * Gets the original source URL of the file.
-     *
-     * @return The source URL.
-     */
     public String getSource() {
         return source;
     }
 
-    /**
-     * Gets the direct download link provided by Debrid-Link.
-     *
-     * @return The download link.
-     */
     public String getDownloadLink() {
         return downloadLink;
     }
 
-    /**
-     * Checks whether the download link has expired.
-     *
-     * @return {@code true} if expired, {@code false} otherwise, or {@code null} if unknown.
-     */
-    public Boolean isExpired() {
-        return expired;
+    public Optional<String> getHost() {
+        return Optional.ofNullable(host);
     }
 
-    /**
-     * Gets the host name from which the file originates.
-     *
-     * @return The host name, or {@code null} if not available.
-     */
-    public String getHost() {
-        return host;
-    }
-
-    /**
-     * Gets the size of the file in bytes.
-     *
-     * @return The file size, or {@code null} if unknown.
-     */
-    public Long getSize() {
-        return size;
+    public Optional<Long> getSize() {
+        return Optional.ofNullable(size);
     }
 }
