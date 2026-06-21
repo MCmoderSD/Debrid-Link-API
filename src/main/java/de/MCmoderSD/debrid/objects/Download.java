@@ -2,7 +2,12 @@ package de.MCmoderSD.debrid.objects;
 
 import tools.jackson.databind.JsonNode;
 
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.Timestamp;

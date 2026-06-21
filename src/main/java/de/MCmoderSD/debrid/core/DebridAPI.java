@@ -46,7 +46,7 @@ public class DebridAPI {
             if (request == null) throw new IllegalArgumentException("HTTP Request must not be null");
 
             // Send HTTP Request
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             // Check Response Status
             var status = response.statusCode();
@@ -67,7 +67,7 @@ public class DebridAPI {
         if (url == null || url.isBlank()) throw new IllegalArgumentException("URL must not be null or empty");
 
         // Build HTTP Request
-        HttpRequest request = HttpRequest.newBuilder()
+        var request = HttpRequest.newBuilder()
                 .uri(URI.create(ENDPOINT + ADD_DOWNLOAD))
                 .header("Authorization", "Bearer " + apiKey)
                 .header("Content-Type", "application/x-www-form-urlencoded")
