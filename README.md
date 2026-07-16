@@ -26,7 +26,7 @@ Add the dependency to your `pom.xml` file:
 <dependency>
     <groupId>de.MCmoderSD</groupId>
     <artifactId>Debrid-Link-API</artifactId>
-    <version>1.1.2</version>
+    <version>1.1.3</version>
 </dependency>
 ```
 
@@ -36,6 +36,8 @@ Add the dependency to your `pom.xml` file:
 import de.MCmoderSD.debrid.core.DebridAPI;
 
 import java.io.File;
+
+import static java.lang.IO.println;
 
 void main() {
 
@@ -53,6 +55,6 @@ void main() {
     var file = download.toFile(new File(download.getName()));
 
     // Print file path
-    IO.println("Downloaded file: " + file.getAbsolutePath());
+    println("Downloaded file: " + file.getAbsolutePath());
 }
 ```

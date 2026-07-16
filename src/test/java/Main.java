@@ -2,6 +2,8 @@ import de.MCmoderSD.debrid.core.DebridAPI;
 
 import java.io.File;
 
+import static java.lang.IO.println;
+
 void main() {
 
     // Variables
@@ -18,5 +20,5 @@ void main() {
     var file = download.toFile(new File(download.getName()));
 
     // Print file path
-    IO.println("Downloaded file: " + file.getAbsolutePath());
+    println("Downloaded file: " + file.getAbsolutePath());
 }
